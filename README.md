@@ -83,4 +83,5 @@ gradlew clean failOnUntiedDependencies release
 # Todos and open issues of the plugin
 - Add a feature to create a release, computing the next versions from the ties, providing a mechanism to easily propose the new version(s) to the release manager
 - Write an elaborate test suite
+- Setup the travis build to publish the result to a public mvn repository
 
