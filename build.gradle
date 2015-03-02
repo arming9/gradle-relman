@@ -1,3 +1,5 @@
+version = '0.1'
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
@@ -46,3 +48,22 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.2.1'
 }
 
+task prepareRelease(description: 'Writes the correct file path to the .travis.yml'){
+	def filepath = jar.archivePath.absolutePath.substring(projectDir.absolutePath.length()+1)
+	def travisFile = new File('.travis.yml');
+	def newTravisFile = new File('.travis.yml_new');
+	def travisFileContent = travisFile.getText('UTF-8')
+
+	newTravisFile.withWriter { w ->
+		travisFile.eachLine { line ->
+			if(line.startsWith('  file: ')){
+				w << '  file: '+filepath+'\n'
+			} else {
+				w << line + '\n'
+			}
+		}
+	}
+	
+	travisFile.delete();
+	newTravisFile.renameTo(travisFile);
+}
