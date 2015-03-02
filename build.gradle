@@ -1,6 +1,14 @@
-version = '0.1'
+if(System.env.containsKey('TRAVIS_TAG')){
+	version = System.env.TRAVIS_TAG
+} else {
+	version = 'preliminary'
+}
+
+group = 'com.github.gradle-relman'
 
 apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
 apply plugin: 'eclipse'
 
 dependencies {
@@ -10,6 +18,7 @@ dependencies {
 sourceCompatibility = JavaVersion.VERSION_1_6
 targetCompatibility = JavaVersion.VERSION_1_6
 
+// prepare the distributables
 jar {
  	from('.') {
     	include "license.txt"
@@ -22,10 +31,74 @@ jar {
     }
 }
 
+task javadocJar(type: Jar) {
+	classifier = 'javadoc'
+	from javadoc
+}
+
+task sourcesJar(type: Jar) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+artifacts {
+	archives javadocJar, sourcesJar
+}
+
+//signing {
+//	sign configurations.archives
+//}
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+//			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+//				authentication(userName: ossrhUsername, password: ossrhPassword)
+//			}
+//
+//			snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+//				authentication(userName: ossrhUsername, password: ossrhPassword)
+//			}
+
+			pom.project {
+				name 'Gradle Release Manager Plugin'
+				packaging 'jar'
+				// optionally artifactId can be defined here
+				description 'A gradle plugin used to define the version numbers of dependencies in a single project, then reuse that version numbers in all other projects for the dependencies.'
+				url 'https://github.com/arming9/gradle-relman'
+
+				scm {
+					connection 'scm:git:https://github.com/arming9/gradle-relman/'
+					developerConnection 'scm:git:https://github.com/arming9/gradle-relman/'
+					url 'https://github.com/arming9/gradle-relman/'
+				}
+
+				licenses {
+					license {
+						name 'MIT License'
+						distribution 'repo'
+						url 'https://github.com/arming9/gradle-relman/license.txt'
+					}
+				}
+
+				developers {
+					developer {
+						id 'arming9'
+						name 'Armin Groll'
+						email 'arming9@gmx.de'
+					}
+				}
+			}
+		}
+	}
+}
+
+// setup eclipse so that we have the classpath and gradle sources available
 eclipse.classpath.downloadSources = true
 
 // this is a workaround from http://forums.gradle.org/gradle/topics/eclipse_plugin_doesnt_attach_source_for_the_gradleapi_dependency
-
 import org.gradle.plugins.ide.eclipse.model.*
 eclipse {
     classpath {
@@ -44,26 +117,8 @@ eclipse {
 }
 // end workaround
 
+// the gradle wrapper generator task in case you need it
 task wrapper(type: Wrapper) {
     gradleVersion = '2.2.1'
 }
 
-task prepareRelease(description: 'Writes the correct file path to the .travis.yml'){
-	def filepath = jar.archivePath.absolutePath.substring(projectDir.absolutePath.length()+1)
-	def travisFile = new File('.travis.yml');
-	def newTravisFile = new File('.travis.yml_new');
-	def travisFileContent = travisFile.getText('UTF-8')
-
-	newTravisFile.withWriter { w ->
-		travisFile.eachLine { line ->
-			if(line.startsWith('  file: ')){
-				w << '  file: '+filepath+'\n'
-			} else {
-				w << line + '\n'
-			}
-		}
-	}
-	
-	travisFile.delete();
-	newTravisFile.renameTo(travisFile);
-}
