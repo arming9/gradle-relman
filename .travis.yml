@@ -4,5 +4,7 @@ deploy:
   api_key:
     secure: HY8n4xtyfUs6vU79P8WbQ7gjT5mHOvJ0ERbvZK/30FGvYQcEdbc3LSnljlU/XQNPeSd2XzUJ3KFBs15uZpDQ0sFaci26Ir6V70yIF3JVs+fYMQr33j5lpF6iF/GABIlUZv05thqHoXzyPmHSlckpGHfoXqIlmhzQYGCvZqsBWcc=
   file: build/libs/gradle-relman-*.jar
+  skip_cleanup: true
   on:
     repo: arming9/gradle-relman
+    tags: true
